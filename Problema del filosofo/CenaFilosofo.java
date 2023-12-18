@@ -1,49 +1,51 @@
 import java.util.Random;
 import java.util.concurrent.Semaphore;
 
-class Filosofo extends Thread {
+class Philosopher extends Thread {
+    //Atributos of  filosofo
     private int id;
-    private Semaphore tenedores[];
+    private Semaphore forks[];
 
-    public Filosofo(int id, Semaphore[] tenedores) {
+    public Philosopher(int id, Semaphore[] forks) {
         this.id = id;
-        this.tenedores = tenedores;
+        this.forks = forks;
     }
 
-    private void pensar() throws InterruptedException {
-        System.out.println("El filosofo " + id + " esta Pensando");
+    private void think() throws InterruptedException {
+        System.out.println("Philosopher " + id + " is thinking");
         Random random = new Random();
-        int tiempoPensando = random.nextInt(5000) + 1000; // Entre 1 y 5 segundos en milisegundos
-        Thread.sleep(tiempoPensando);
+        int waitTime = random.nextInt(5000) + 1000; // Wait between 1 and 5 miliseconds
+        Thread.sleep(waitTime); // Thread sleeps the time generated before
     }
 
-    private void comer() throws InterruptedException {
-        System.out.println("El filosofo " + id + " esta Comiendo");
+    private void eat() throws InterruptedException {
+        System.out.println("Philosopher " + id + " is eating");
         Random random = new Random();
-        int tiempoComiendo = random.nextInt(5000) + 1000; // Entre 1 y 5 segundos en milisegundos
-        Thread.sleep(tiempoComiendo);
+        int waitTime = random.nextInt(5000) + 1000; // Wait between 1 and 5 miliseconds
+        Thread.sleep(waitTime); // Thread sleeps the time generated before
     }
 
     @Override
     public void run() {
         try {
             while (true) {
-                pensar();
-                if (tenedores[id].tryAcquire()) { // Toma el tenedor de la derecha
-                    if (tenedores[(id + 1) % tenedores.length].tryAcquire()) { // Intenta tomar el tenedor de la izquierda
-                        comer();
+                // They all start thinking
+                think();
+                if (forks[id].tryAcquire()) { // Takes the rigth fork
+                    if (forks[(id + 1) % forks.length].tryAcquire()) { // Tries to take the left fork
+                        eat();
 
-                        tenedores[id].release(); // Suelta el tenedor de la derecha
-                        tenedores[(id + 1) % tenedores.length].release(); // Suelta el tenedor de la izquierda
+                        forks[id].release(); // Leaves the rigth fork till he finishes eating
+                        forks[(id + 1) % forks.length].release(); // Leaves the left fork
                     } else {
-                        // No pudo adquirir el tenedor de la izquierda, suelta el tenedor de la derecha
-                        tenedores[id].release();
-                        // Espera un tiempo aleatorio antes de intentar nuevamente
-                        Thread.sleep(new Random().nextInt(2000) + 1000); // Entre 1 y 3 segundos en milisegundos
+                        // Leaves the rigth fork if he couldn't take the left one
+                        forks[id].release();
+                        // Tries again
+                        Thread.sleep(new Random().nextInt(2000) + 1000);  // Wait between 1 and 3 miliseconds
                     }
                 } else {
-                    // Espera un tiempo aleatorio antes de intentar nuevamente
-                    Thread.sleep(new Random().nextInt(2000) + 1000); // Entre 1 y 3 segundos en milisegundos
+                    // Waits random time till he tries again
+                    Thread.sleep(new Random().nextInt(2000) + 1000); // Wait between 1 and 3 miliseconds
                 }
             }
         } catch (InterruptedException e) {
@@ -52,20 +54,19 @@ class Filosofo extends Thread {
     }
 }
 
-public class CenaFilosofo{
+public class PhilosopherDinner{
     public static void main(String[] args) {
-        int numFilosofos = 5;
-        Semaphore[] tenedores = new Semaphore[numFilosofos];
+        int numPhilosopher = 5;
+        Semaphore[] forks = new Semaphore[numPhilosopher];
+        Philosopher[] philosophers = new Philosopher[numPhilosopher];
 
-        for (int i = 0; i < numFilosofos; i++) {
-            tenedores[i] = new Semaphore(1); // Inicialmente, todos los tenedores están disponibles
+        for (int i = 0; i < numPhilosopher; i++) {
+            forks[i] = new Semaphore(1); // Start all forks to available
         }
 
-        Filosofo[] filosofos = new Filosofo[numFilosofos];
-
-        for (int i = 0; i < numFilosofos; i++) {
-            filosofos[i] = new Filosofo(i, tenedores);
-            filosofos[i].start();
+        for (int i = 0; i < numPhilosopher; i++) {
+            philosophers[i] = new Philosopher(i, forks);
+            philosophers[i].start();
         }
     }
 }
