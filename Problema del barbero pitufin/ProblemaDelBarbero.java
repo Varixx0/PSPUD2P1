@@ -13,6 +13,25 @@
 
 public class ProblemaDelBarbero {
     public static void main(String[] args) {
-        
+        Barberia barberia = new Barberia();
+
+        // Llegada de los clientes
+        for (int i = 0; i < 10; i++) {
+            try {
+                Thread.sleep((long) (Math.random() * 2000));
+                new Thread(() -> {
+                    try {
+                        barberia.llegarCliente();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                }).start();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        // Inicio del trabajo del barbero
+        new Thread(barberia::trabajar).start();
     }
 }
